@@ -7,7 +7,8 @@
     <my-dialog v-model:show="dialogVisible">
       <post-form @create="createPost" />
     </my-dialog>
-    <post-list :posts="posts" @remove="removePost" />
+    <post-list :posts="posts" @remove="removePost" v-if="!isPostsLoading" />
+    <div v-else>Идет загрузка...</div>
   </div>
 </template>
 
@@ -16,7 +17,8 @@
 import PostForm from "@/components/PostForm";
 import PostList from "@/components/PostList";
 import MyDialog from "./components/UI/MyDialog.vue";
-
+import axios from "axios";
+import MyButton from "./components/UI/MyButton.vue";
 //  в эту секцию по дефолту мы должны экспортировать объект. По сути этот объект и будет являться компонентом
 export default {
   // компонент необходимо зарегистрировать
@@ -24,18 +26,15 @@ export default {
     PostForm,
     PostList,
     MyDialog,
+    MyButton,
   },
 
   data() {
     return {
       // внутри мы можем объявлять поля (модели - likes)
-      posts: [
-        { id: 1, title: "Js_1", body: "Описание_1" },
-        { id: 2, title: "Js_2", body: "Описание_2" },
-        { id: 3, title: "Js_3", body: "Описание_3" },
-        { id: 4, title: "Js_4", body: "Описание_4" },
-      ],
+      posts: [],
       dialogVisible: false,
+      isPostsLoading: false,
     };
   },
   //   функции объявляются в поле methods у компонента
@@ -50,6 +49,24 @@ export default {
     showDialog() {
       this.dialogVisible = true;
     },
+    async fetchPosts() {
+      try {
+        this.isPostsLoading = true;
+
+        const response = await axios.get(
+          "https://jsonplaceholder.typicode.com/posts?_limit=10"
+        );
+        this.posts = response.data;
+      } catch (e) {
+        alert("Ошибка");
+      } finally {
+        this.isPostsLoading = false;
+      }
+    },
+  },
+  // Динамическая подгрузка постов в хуке mounted
+  mounted() {
+    this.fetchPosts();
   },
 };
 </script>
